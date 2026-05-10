@@ -240,7 +240,7 @@ const storageBrowserDisplayText: StorageBrowserDisplayText = {
 
 function App() {
   return (
-    <Authenticator components={authenticatorComponents}>
+    <Authenticator components={authenticatorComponents} hideSignUp>
       {({ signOut, user }) => (
         <main className="app-shell">
           <header className="site-header">
@@ -261,10 +261,10 @@ function App() {
           <section className="hero-card" aria-labelledby="storage-title">
             <div>
               <span className="eyebrow">Panel seguro</span>
-              <h1 id="storage-title">Gestor documental antifraude</h1>
+              <h1 id="storage-title">Gestor documental de Frauden</h1>
               <p>
-                Organiza, consulta y administra archivos críticos con una experiencia clara,
-                profesional y alineada a la identidad de Frauden.
+                carga archivos y organiza de forma segura y sencilla el archivo documental de
+                Frauden.
               </p>
             </div>
           </section>
