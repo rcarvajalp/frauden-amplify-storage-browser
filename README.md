@@ -11,8 +11,8 @@ This template equips you with a foundational React application integrated with A
 - **Authentication**: Setup with Amazon Cognito for secure user authentication with email login.   
    - More info on how to setup and configuration option: https://docs.amplify.aws/react/build-a-backend/auth/set-up-auth/
 - **Storage**: Configured with multiple S3 buckets and granular access controls. The sample is configured with
-  - Default storage bucket with public, admin, and private access paths
-  - Secondary storage bucket with separate backup paths.
+  - Default `frauden-bucket` storage bucket with `doctrina`, `medios`, `jurisprudencia`, and `legislacion` access paths for authenticated readers and admin read/write/delete access.
+  - Secondary `frauden-expedientes` storage bucket with `publico`, `confidencial`, and owner-scoped `privado/{entity_id}` access paths, including delete permissions wherever write access is granted.
   - More info on how to setup : https://docs.amplify.aws/react/build-a-backend/storage/set-up-storage/#building-your-storage-backend
 - **UI Components**: Pre-integrated Amplify UI React components including:
   - Authenticator for sign-in/sign-up flows
