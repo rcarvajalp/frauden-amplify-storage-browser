@@ -11,6 +11,9 @@ const backend = defineBackend({
   secondaryStorage,
 });
 
+// Do not override cfnBucket.bucketName here. S3 bucket names are globally unique,
+// and Amplify's generated physical names avoid collisions during deployments.
+
 const { cfnUserPool } = backend.auth.resources.cfnResources;
 
 cfnUserPool.adminCreateUserConfig = {
