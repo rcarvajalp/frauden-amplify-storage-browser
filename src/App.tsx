@@ -1,4 +1,5 @@
 import {
+  componentsDefault,
   createAmplifyAuthAdapter,
   createStorageBrowser,
 } from '@aws-amplify/ui-react-storage/browser';
@@ -11,12 +12,64 @@ import { Amplify } from 'aws-amplify';
 import { I18n } from 'aws-amplify/utils';
 import { Authenticator, Button, translations } from '@aws-amplify/ui-react';
 import fraudenLogo from './assets/frauden-logo.svg';
+import type { ComponentProps } from 'react';
 
 Amplify.configure(config);
 I18n.putVocabularies(translations);
 I18n.setLanguage('es');
 
+const resourceBucketNames = ['frauden-bucket', 'frauden-expedientes'] as const;
+
+const getResourceBucketName = (bucketName: string) => {
+  const comparableBucketName = bucketName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  return (
+    resourceBucketNames.find((resourceBucketName) => {
+      const comparableResourceBucketName = resourceBucketName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      return (
+        bucketName === resourceBucketName ||
+        comparableBucketName.includes(comparableResourceBucketName)
+      );
+    }) ?? bucketName
+  );
+};
+
+const DefaultDataTable = componentsDefault.DataTable;
+
+type DataTableProps = ComponentProps<NonNullable<typeof DefaultDataTable>>;
+
+const ResourceBucketDataTable = ({ headers, rows, ...props }: DataTableProps) => {
+  const bucketColumnIndex = headers.findIndex(({ key }) => key === 'bucket');
+  const displayRows =
+    bucketColumnIndex === -1
+      ? rows
+      : rows.map((row) => ({
+          ...row,
+          content: row.content.map((cell, index) =>
+            index === bucketColumnIndex && cell.type === 'text'
+              ? {
+                  ...cell,
+                  content: {
+                    ...cell.content,
+                    text: getResourceBucketName(cell.content.text ?? ''),
+                  },
+                }
+              : cell
+          ),
+        }));
+
+  return DefaultDataTable ? (
+    <DefaultDataTable {...props} headers={headers} rows={displayRows} />
+  ) : null;
+};
+
 const { StorageBrowser } = createStorageBrowser({
+  components: {
+    DataTable: ResourceBucketDataTable,
+  },
   config: createAmplifyAuthAdapter(),
 });
 
@@ -89,6 +142,7 @@ const storageBrowserDisplayText: StorageBrowserDisplayText = {
     tableColumnNameHeader: 'Nombre',
     tableColumnSizeHeader: 'Tamaño',
     tableColumnTypeHeader: 'Tipo',
+    getTitle: ({ current, key }) => key || getResourceBucketName(current?.bucket ?? ''),
     getActionListItemLabel: (key = '') => {
       const labels: Record<string, string> = {
         Copy: 'Copiar',
