@@ -1,5 +1,4 @@
 import {
-  componentsDefault,
   createAmplifyAuthAdapter,
   createStorageBrowser,
 } from '@aws-amplify/ui-react-storage/browser';
@@ -12,7 +11,6 @@ import { Amplify } from 'aws-amplify';
 import { I18n } from 'aws-amplify/utils';
 import { Authenticator, Button, translations } from '@aws-amplify/ui-react';
 import fraudenLogo from './assets/frauden-logo.svg';
-import type { ComponentProps } from 'react';
 
 Amplify.configure(config);
 I18n.putVocabularies(translations);
@@ -75,9 +73,6 @@ const ResourceBucketDataTable = ({ headers, rows, ...props }: DataTableProps) =>
 };
 
 const { StorageBrowser } = createStorageBrowser({
-  components: {
-    DataTable: ResourceBucketDataTable,
-  },
   config: createAmplifyAuthAdapter(),
 });
 

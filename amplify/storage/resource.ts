@@ -1,10 +1,7 @@
 import { defineStorage } from '@aws-amplify/backend';
 
-export const storageBucketName = 'frauden-bucket';
-export const secondaryStorageBucketName = 'frauden-expedientes';
-
 export const storage = defineStorage({
-  name: storageBucketName,
+  name: 'frauden',
   isDefault: true,
   access: (allow) => ({
     'doctrina/*': [
@@ -27,7 +24,7 @@ export const storage = defineStorage({
 });
 
 export const secondaryStorage = defineStorage({
-  name: secondaryStorageBucketName,
+  name: 'frauden-expedientes',
   access: (allow) => ({
     'publico/*': [allow.authenticated.to(['read', 'write', 'delete'])],
     'confidencial/*': [allow.groups(['admin']).to(['read', 'write', 'delete'])],
