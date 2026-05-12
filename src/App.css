@@ -221,7 +221,8 @@ body::before {
   background: #f4f6f9;
 }
 
-.storage-card [data-testid='LOCATIONS_VIEW'] .storage-browser__table :is(th, td):nth-child(2) {
+.storage-card [data-testid='LOCATIONS_VIEW'] :is(.amplify-storage-browser__table, .storage-browser__table)
+  :is(th, td):nth-child(2) {
   display: none;
 }
 
