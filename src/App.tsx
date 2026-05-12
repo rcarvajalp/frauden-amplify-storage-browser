@@ -16,6 +16,62 @@ Amplify.configure(config);
 I18n.putVocabularies(translations);
 I18n.setLanguage('es');
 
+const getBucketFriendlyName = (bucketName: string) => {
+  const buckets = Amplify.getConfig().Storage?.S3?.buckets;
+  const bucketEntry = Object.entries(buckets ?? {}).find(
+    ([, { bucketName: configuredBucketName }]) => configuredBucketName === bucketName
+  );
+
+  return bucketEntry?.[0] ?? bucketName;
+};
+
+const DefaultDataTable = componentsDefault.DataTable;
+
+type DataTableProps = ComponentProps<NonNullable<typeof DefaultDataTable>>;
+
+const ResourceBucketDataTable = ({ headers, rows, ...props }: DataTableProps) => {
+  const bucketColumnIndex = headers.findIndex(({ key }) => key === 'bucket');
+  const folderColumnIndex = headers.findIndex(({ key }) => key === 'folder');
+  const displayRows =
+    bucketColumnIndex === -1 && folderColumnIndex === -1
+      ? rows
+      : rows.map((row) => ({
+          ...row,
+          content: row.content.map((cell, index) => {
+            const isBucketColumn = index === bucketColumnIndex;
+            const isFolderColumn = index === folderColumnIndex;
+
+            if (!isBucketColumn && !isFolderColumn) return cell;
+
+            if (cell.type === 'text') {
+              return {
+                ...cell,
+                content: {
+                  ...cell.content,
+                  text: getBucketFriendlyName(cell.content.text ?? ''),
+                },
+              };
+            }
+
+            if (cell.type === 'button') {
+              return {
+                ...cell,
+                content: {
+                  ...cell.content,
+                  label: getBucketFriendlyName(cell.content.label ?? ''),
+                },
+              };
+            }
+
+            return cell;
+          }),
+        }));
+
+  return DefaultDataTable ? (
+    <DefaultDataTable {...props} headers={headers} rows={displayRows} />
+  ) : null;
+};
+
 const { StorageBrowser } = createStorageBrowser({
   config: createAmplifyAuthAdapter(),
 });
@@ -89,6 +145,7 @@ const storageBrowserDisplayText: StorageBrowserDisplayText = {
     tableColumnNameHeader: 'Nombre',
     tableColumnSizeHeader: 'Tamaño',
     tableColumnTypeHeader: 'Tipo',
+    getTitle: ({ current, key }) => key || getBucketFriendlyName(current?.bucket ?? ''),
     getActionListItemLabel: (key = '') => {
       const labels: Record<string, string> = {
         Copy: 'Copiar',
