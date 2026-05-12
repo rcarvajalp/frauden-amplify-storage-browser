@@ -6,8 +6,6 @@ import {
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react-storage/styles.css';
 import './App.css';
-import type { ComponentProps } from 'react';
-
 import config from '../amplify_outputs.json';
 import { Amplify } from 'aws-amplify';
 import { I18n } from 'aws-amplify/utils';
@@ -18,111 +16,9 @@ Amplify.configure(config);
 I18n.putVocabularies(translations);
 I18n.setLanguage('es');
 
-type AmplifyBucketInfo = {
-  bucketName?: string;
-};
-
-const getBucketFriendlyName = (bucketName: string) => {
-  if (!bucketName) return bucketName;
-
-  const storageConfig = Amplify.getConfig().Storage?.S3;
-  const buckets = storageConfig?.buckets ?? {};
-  const bucketEntry = Object.entries(buckets).find(
-    ([, bucketInfo]: [string, AmplifyBucketInfo]) => bucketInfo?.bucketName === bucketName
-  );
-
-  // Amplify Gen 2 stores the user-facing storage resource name in the
-  // `amplify:friendly-name` tag and emits that same value as the key in
-  // `Storage.S3.buckets` inside amplify_outputs.json. Fall back to the real
-  // bucket name if the bucket is not present in the generated outputs.
-  return bucketEntry?.[0] ?? bucketName;
-};
-
-const DefaultDataTable = componentsDefault.DataTable;
-
-type DataTableProps = ComponentProps<NonNullable<typeof DefaultDataTable>>;
-type DataTableRow = DataTableProps['rows'][number];
-type DataTableCell = DataTableRow['content'][number];
-
-const getTextCellValue = (cell: DataTableCell | undefined) => {
-  if (cell?.type === 'text') return cell.content.text;
-  if (cell?.type === 'button') return cell.content.label;
-
-  return undefined;
-};
-
-const withCellDisplayText = (cell: DataTableCell, displayText: string): DataTableCell => {
-  if (cell.type === 'text') {
-    return {
-      ...cell,
-      content: {
-        ...cell.content,
-        text: displayText,
-      },
-    };
-  }
-
-  if (cell.type === 'button') {
-    return {
-      ...cell,
-      content: {
-        ...cell.content,
-        label: displayText,
-      },
-    };
-  }
-
-  return cell;
-};
-
-const ResourceBucketDataTable = ({ headers, rows, ...props }: DataTableProps) => {
-  const bucketColumnIndex = headers.findIndex(({ key }) => key === 'bucket');
-  const folderColumnIndex = headers.findIndex(({ key }) => key === 'folder');
-  const isLocationsTable =
-    bucketColumnIndex !== -1 &&
-    folderColumnIndex !== -1 &&
-    headers.some(({ key }) => key === 'permission');
-
-  const displayRows = !isLocationsTable
-    ? rows
-    : rows.map((row) => {
-        const bucketName = getTextCellValue(row.content[bucketColumnIndex]);
-        const friendlyBucketName = getBucketFriendlyName(bucketName ?? '');
-
-        return {
-          ...row,
-          content: row.content.map((cell, index) => {
-            if (index === bucketColumnIndex) {
-              return withCellDisplayText(cell, friendlyBucketName);
-            }
-
-            const folderDisplayValue = getTextCellValue(cell);
-
-            // In the Locations view, Amplify uses the real bucket name as the
-            // folder button label only for bucket-level locations where there is
-            // no prefix. Prefix rows such as `doctrina/` must stay untouched;
-            // otherwise the destination/location data can become visually
-            // misleading and hard to navigate.
-            if (index === folderColumnIndex && folderDisplayValue === bucketName) {
-              return withCellDisplayText(cell, friendlyBucketName);
-            }
-
-            return cell;
-          }),
-        };
-      });
-
-  return DefaultDataTable ? (
-    <DefaultDataTable {...props} headers={headers} rows={displayRows} />
-  ) : null;
-};
-
 const { StorageBrowser } = createStorageBrowser({
   config: createAmplifyAuthAdapter(),
-  components: {
-    ...componentsDefault,
-    DataTable: ResourceBucketDataTable,
-  },
+  components: componentsDefault,
 });
 
 type StorageBrowserDisplayText = NonNullable<Parameters<typeof StorageBrowser>[0]['displayText']>;
@@ -194,7 +90,7 @@ const storageBrowserDisplayText: StorageBrowserDisplayText = {
     tableColumnNameHeader: 'Nombre',
     tableColumnSizeHeader: 'Tamaño',
     tableColumnTypeHeader: 'Tipo',
-    getTitle: ({ current, key }) => key || getBucketFriendlyName(current?.bucket ?? ''),
+    getTitle: ({ current, key }) => key || current?.bucket || '',
     getActionListItemLabel: (key = '') => {
       const labels: Record<string, string> = {
         Copy: 'Copiar',
