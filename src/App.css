@@ -138,8 +138,8 @@ body::before {
 .hero-card {
   position: relative;
   overflow: hidden;
-  margin: 1.25rem 0;
-  padding: clamp(1.5rem, 4vw, 3.75rem);
+  margin: 1rem 0;
+  padding: clamp(1rem, 2.5vw, 2.25rem) clamp(1.25rem, 4vw, 3.75rem);
   color: white;
   background:
     linear-gradient(135deg, rgba(16, 25, 54, 0.94), rgba(31, 45, 95, 0.88)),
@@ -163,7 +163,7 @@ body::before {
 .hero-card > div {
   position: relative;
   z-index: 1;
-  max-width: 50rem;
+  width: 100%;
 }
 
 .hero-card .eyebrow {
@@ -171,7 +171,8 @@ body::before {
 }
 
 .hero-card h1 {
-  max-width: 48rem;
+  width: 100%;
+  max-width: none;
   margin: 0;
   font-size: clamp(2rem, 5vw, 4.75rem);
   line-height: 0.96;
