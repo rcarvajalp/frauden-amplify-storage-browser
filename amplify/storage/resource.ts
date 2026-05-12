@@ -1,7 +1,7 @@
 import { defineStorage } from '@aws-amplify/backend';
 
 export const storage = defineStorage({
-  name: 'frauden-bucket',
+  name: 'frauden',
   isDefault: true,
   access: (allow) => ({
     'doctrina/*': [
