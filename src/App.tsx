@@ -6,8 +6,10 @@ import {
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react-storage/styles.css';
 import './App.css';
+import { useState } from 'react';
 import config from '../amplify_outputs.json';
 import { Amplify } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { I18n } from 'aws-amplify/utils';
 import { Authenticator, Button, translations } from '@aws-amplify/ui-react';
 import fraudenLogo from './assets/frauden-logo.svg';
@@ -23,6 +25,13 @@ const { StorageBrowser } = createStorageBrowser({
 
 type StorageBrowserDisplayText = NonNullable<Parameters<typeof StorageBrowser>[0]['displayText']>;
 
+type KnowledgeSyncStatus = {
+  message: string;
+  type: 'error' | 'info' | 'success';
+} | null;
+
+const syncKnowledgeEndpoint = import.meta.env.VITE_SYNC_KNOWLEDGE_LAMBDA_URL?.trim();
+
 const authenticatorComponents = {
   Header() {
     return (
@@ -32,6 +41,92 @@ const authenticatorComponents = {
     );
   },
 };
+
+function KnowledgeSyncButton() {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<KnowledgeSyncStatus>(null);
+
+  const handleKnowledgeSync = async () => {
+    if (!syncKnowledgeEndpoint) {
+      setSyncStatus({
+        type: 'error',
+        message:
+          'Configura VITE_SYNC_KNOWLEDGE_LAMBDA_URL con la URL de la Lambda para sincronizar.',
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    setSyncStatus({ type: 'info', message: 'Solicitando sincronización de conocimiento...' });
+
+    try {
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+
+      if (!idToken) {
+        throw new Error('No se encontró una sesión autenticada para invocar la Lambda.');
+      }
+
+      const response = await fetch(syncKnowledgeEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'syncKnowledgeBase' }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(
+          errorMessage || `La Lambda respondió con estado ${response.status}. Intenta nuevamente.`
+        );
+      }
+
+      setSyncStatus({
+        type: 'success',
+        message: 'Sincronización de conocimiento iniciada correctamente.',
+      });
+    } catch (error) {
+      setSyncStatus({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'No se pudo iniciar la sincronización de conocimiento.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  return (
+    <div className="knowledge-sync-panel">
+      <div>
+        <span className="eyebrow">Base de conocimiento</span>
+        <p>Invoca la Lambda de sincronización usando tu sesión autenticada.</p>
+      </div>
+      <div className="knowledge-sync-actions">
+        <Button
+          className="knowledge-sync-button"
+          variation="primary"
+          onClick={handleKnowledgeSync}
+          isDisabled={isSyncing}
+        >
+          {isSyncing ? 'Sincronizando...' : 'Sincronizar conocimiento'}
+        </Button>
+        {syncStatus ? (
+          <div
+            className={`knowledge-sync-status knowledge-sync-status--${syncStatus.type}`}
+            role={syncStatus.type === 'error' ? 'alert' : 'status'}
+          >
+            {syncStatus.message}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 const storageBrowserDisplayText: StorageBrowserDisplayText = {
   LocationsView: {
@@ -272,6 +367,7 @@ function App() {
           </section>
 
           <section className="storage-card" aria-label="Explorador de almacenamiento">
+            <KnowledgeSyncButton />
             <StorageBrowser displayText={storageBrowserDisplayText} />
           </section>
         </main>

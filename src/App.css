@@ -193,6 +193,66 @@ body::before {
   line-height: 1.7;
 }
 
+.knowledge-sync-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg, rgba(16, 25, 54, 0.06), rgba(201, 204, 209, 0.18));
+  border: 1px solid rgba(16, 25, 54, 0.08);
+  border-radius: 1.25rem;
+}
+
+.knowledge-sync-panel p {
+  margin: 0;
+  color: var(--frauden-silver-dark);
+  line-height: 1.5;
+}
+
+.knowledge-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.knowledge-sync-button.amplify-button {
+  min-height: 3rem;
+  padding-inline: 1.25rem;
+  font-weight: 700;
+  box-shadow: 0 14px 30px rgba(16, 25, 54, 0.18);
+}
+
+.knowledge-sync-status {
+  max-width: 28rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 0.85rem;
+}
+
+.knowledge-sync-status--error {
+  color: #8a1f11;
+  background: #fff0ed;
+  border: 1px solid #f3b3a8;
+}
+
+.knowledge-sync-status--info {
+  color: var(--frauden-navy);
+  background: #eef4ff;
+  border: 1px solid #c7d8f8;
+}
+
+.knowledge-sync-status--success {
+  color: #115f35;
+  background: #edfff5;
+  border: 1px solid #a8e2c0;
+}
+
 .storage-card {
   padding: clamp(0.85rem, 2vw, 1.4rem);
   background: var(--frauden-surface);
