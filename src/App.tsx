@@ -1,10 +1,12 @@
 import {
+  componentsDefault,
   createAmplifyAuthAdapter,
   createStorageBrowser,
 } from '@aws-amplify/ui-react-storage/browser';
 import '@aws-amplify/ui-react/styles.css';
 import '@aws-amplify/ui-react-storage/styles.css';
 import './App.css';
+import type { ComponentProps } from 'react';
 
 import config from '../amplify_outputs.json';
 import { Amplify } from 'aws-amplify';
@@ -74,6 +76,10 @@ const ResourceBucketDataTable = ({ headers, rows, ...props }: DataTableProps) =>
 
 const { StorageBrowser } = createStorageBrowser({
   config: createAmplifyAuthAdapter(),
+  components: {
+    ...componentsDefault,
+    DataTable: ResourceBucketDataTable,
+  },
 });
 
 type StorageBrowserDisplayText = NonNullable<Parameters<typeof StorageBrowser>[0]['displayText']>;
