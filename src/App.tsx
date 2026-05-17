@@ -31,6 +31,8 @@ type KnowledgeSyncStatus = {
 } | null;
 
 const syncKnowledgeEndpoint = import.meta.env.VITE_SYNC_KNOWLEDGE_LAMBDA_URL?.trim();
+const syncKnowledgeTooltip =
+  'Cuando agregues nuevos documentos o elimines debes sincronizar la base de conocimiento para cargar la nueva información';
 
 const authenticatorComponents = {
   Header() {
@@ -104,12 +106,12 @@ function KnowledgeSyncButton() {
     <div className="knowledge-sync-panel">
       <div>
         <span className="eyebrow">Base de conocimiento</span>
-        <p>Invoca la Lambda de sincronización usando tu sesión autenticada.</p>
       </div>
       <div className="knowledge-sync-actions">
         <Button
           className="knowledge-sync-button"
           variation="primary"
+          title={syncKnowledgeTooltip}
           onClick={handleKnowledgeSync}
           isDisabled={isSyncing}
         >
