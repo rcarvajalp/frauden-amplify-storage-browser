@@ -1,6 +1,6 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { Aspects, IAspect } from 'aws-cdk-lib';
-import { ArnPrincipal, Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { CfnFunction } from 'aws-cdk-lib/aws-lambda';
 import { IConstruct } from 'constructs';
 import { auth } from './auth/resource';
@@ -29,61 +29,53 @@ class AmplifyBranchLinkerNodeRuntime implements IAspect {
 Aspects.of(backend.stack).add(new AmplifyBranchLinkerNodeRuntime());
 
 const expedientesBucket = backend.secondaryStorage.resources.bucket;
+const expedientesAccessStack = backend.createStack('expedientesAccess');
 const privateIdentityPrefix = 'privado/${cognito-identity.amazonaws.com:sub}';
-const gexpedientesPrincipal = new ArnPrincipal(
-  backend.auth.resources.groups.gexpedientes.role.roleArn
-);
-const authenticatedUsersPrincipal = new ArnPrincipal(
-  backend.auth.resources.authenticatedUserIamRole.roleArn
-);
 
 // Storage group rules replace {entity_id} with a wildcard. Keep the owner-scoped
-// storage output and enforce the gexpedientes gate from the bucket policy.
-expedientesBucket.addToResourcePolicy(
-  new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [gexpedientesPrincipal],
-    actions: ['s3:GetObject', 's3:PutObject'],
-    resources: [`${expedientesBucket.bucketArn}/${privateIdentityPrefix}/*`],
-  })
-);
-
-expedientesBucket.addToResourcePolicy(
-  new PolicyStatement({
-    effect: Effect.ALLOW,
-    principals: [gexpedientesPrincipal],
-    actions: ['s3:ListBucket'],
-    resources: [expedientesBucket.bucketArn],
-    conditions: {
-      StringLike: {
-        's3:prefix': [`${privateIdentityPrefix}/*`, `${privateIdentityPrefix}/`],
+// storage output and enforce the gexpedientes gate from a separate stack to
+// avoid a direct Auth <-> Storage dependency cycle.
+new Policy(expedientesAccessStack, 'GExpedientesPrivateFolderAccess', {
+  roles: [backend.auth.resources.groups.gexpedientes.role],
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:GetObject', 's3:PutObject'],
+      resources: [`${expedientesBucket.bucketArn}/${privateIdentityPrefix}/*`],
+    }),
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['s3:ListBucket'],
+      resources: [expedientesBucket.bucketArn],
+      conditions: {
+        StringLike: {
+          's3:prefix': [`${privateIdentityPrefix}/*`, `${privateIdentityPrefix}/`],
+        },
       },
-    },
-  })
-);
+    }),
+  ],
+});
 
-expedientesBucket.addToResourcePolicy(
-  new PolicyStatement({
-    effect: Effect.DENY,
-    principals: [authenticatedUsersPrincipal],
-    actions: ['s3:GetObject', 's3:PutObject'],
-    resources: [`${expedientesBucket.bucketArn}/privado/*`],
-  })
-);
-
-expedientesBucket.addToResourcePolicy(
-  new PolicyStatement({
-    effect: Effect.DENY,
-    principals: [authenticatedUsersPrincipal],
-    actions: ['s3:ListBucket'],
-    resources: [expedientesBucket.bucketArn],
-    conditions: {
-      StringLike: {
-        's3:prefix': ['privado/*', 'privado/'],
+new Policy(expedientesAccessStack, 'AuthenticatedPrivateFolderDeny', {
+  roles: [backend.auth.resources.authenticatedUserIamRole],
+  statements: [
+    new PolicyStatement({
+      effect: Effect.DENY,
+      actions: ['s3:GetObject', 's3:PutObject'],
+      resources: [`${expedientesBucket.bucketArn}/privado/*`],
+    }),
+    new PolicyStatement({
+      effect: Effect.DENY,
+      actions: ['s3:ListBucket'],
+      resources: [expedientesBucket.bucketArn],
+      conditions: {
+        StringLike: {
+          's3:prefix': ['privado/*', 'privado/'],
+        },
       },
-    },
-  })
-);
+    }),
+  ],
+});
 
 const { cfnUserPool } = backend.auth.resources.cfnResources;
 
