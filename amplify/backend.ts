@@ -76,9 +76,18 @@ new AwsCustomResource(expedientesAccessStack, 'LinkGExpedientesGroupRole', {
   onCreate: linkGExpedientesGroupRoleCall,
   onUpdate: linkGExpedientesGroupRoleCall,
   installLatestAwsSdk: false,
-  policy: AwsCustomResourcePolicy.fromSdkCalls({
-    resources: [backend.auth.resources.userPool.userPoolArn],
-  }),
+  policy: AwsCustomResourcePolicy.fromStatements([
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['cognito-idp:UpdateGroup'],
+      resources: [backend.auth.resources.userPool.userPoolArn],
+    }),
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['iam:PassRole'],
+      resources: [gexpedientesRole.roleArn],
+    }),
+  ]),
 });
 
 new Policy(expedientesAccessStack, 'GExpedientesPrivateFolderAccess', {
