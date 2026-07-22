@@ -30,14 +30,6 @@ export const storage = defineStorage({
 export const secondaryStorage = defineStorage({
   name: 'frauden-expedientes',
   access: (allow) => ({
-    'publico/*': [
-      allow.authenticated.to(['read', 'write']),
-      allow.groups(['eliminadores']).to(['delete']),
-    ],
-    'confidencial/*': [
-      allow.groups(['admin']).to(['read', 'write']),
-      allow.groups(['eliminadores']).to(['delete']),
-    ],
     'privado/{entity_id}/*': [
       allow.entity('identity').to(['read', 'write']),
       allow.groups(['eliminadores']).to(['delete']),

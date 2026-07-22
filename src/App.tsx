@@ -33,6 +33,9 @@ type KnowledgeSyncStatus = {
 const syncKnowledgeEndpoint = import.meta.env.VITE_SYNC_KNOWLEDGE_LAMBDA_URL?.trim();
 const syncKnowledgeTooltip =
   'Cuando agregues nuevos documentos o elimines debes sincronizar la base de conocimiento para cargar la nueva información';
+const syncKnowledgeRequestSentMessage =
+  'Solicitud de sincronización enviada para todas las fuentes de datos de las 5 bases de conocimiento. Esto puede tardar un rato.';
+const syncKnowledgeButtonCooldownMs = 3000;
 
 const authenticatorComponents = {
   Header() {
@@ -69,7 +72,7 @@ function KnowledgeSyncButton() {
         throw new Error('No se encontró una sesión autenticada para invocar la Lambda.');
       }
 
-      const response = await fetch(syncKnowledgeEndpoint, {
+      const syncRequest = fetch(syncKnowledgeEndpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -78,17 +81,16 @@ function KnowledgeSyncButton() {
         body: JSON.stringify({ action: 'syncKnowledgeBase' }),
       });
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(
-          errorMessage || `La Lambda respondió con estado ${response.status}. Intenta nuevamente.`
-        );
-      }
+      void syncRequest.catch((error) => {
+        console.warn('No se pudo leer la respuesta de sincronización.', error);
+      });
 
       setSyncStatus({
         type: 'success',
-        message: 'Sincronización de conocimiento iniciada correctamente.',
+        message: syncKnowledgeRequestSentMessage,
       });
+
+      window.setTimeout(() => setIsSyncing(false), syncKnowledgeButtonCooldownMs);
     } catch (error) {
       setSyncStatus({
         type: 'error',
@@ -97,7 +99,6 @@ function KnowledgeSyncButton() {
             ? error.message
             : 'No se pudo iniciar la sincronización de conocimiento.',
       });
-    } finally {
       setIsSyncing(false);
     }
   };
